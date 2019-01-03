@@ -18,5 +18,10 @@
   "license": "CC0-1.0",
   "devDependencies": {
     "electron": "^3.0.7"
+  },
+  "dependencies": {
+    "html-pdf": "^2.2.0",
+    "save-svg-as-png": "^1.4.6",
+    "svg-to-img": "^2.0.8"
   }
 }

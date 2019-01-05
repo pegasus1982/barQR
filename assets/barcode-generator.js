@@ -1,6 +1,11 @@
 const svgToImg = require("svg-to-img");
 const { dialog } = require('electron').remote;
+const tempDir = require('temp-dir');
+const AdmZip = require('adm-zip');
 
+///////////////////////////////////////////////////////////////////////
+//download individual
+///////////////////////////////////////////////////////////////////////
 function convertioApiCall(index,type){
     console.log(index);
     var elem = document.getElementById(index);
@@ -125,7 +130,7 @@ function downloadPDF(index){
     }
     var value = $('#'+index).attr('value');
     var opt = {
-        margin:       1,
+        margin:       0,
         filename:     bar_type+"_"+value+".pdf",
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 30 },
@@ -143,6 +148,174 @@ function downloadAI(index){
 function downloadEPS(index){
     convertioApiCall(index,'eps');
 }
+
+///////////////////////////////////////////////////////////////////////
+//download bulk
+///////////////////////////////////////////////////////////////////////
+function savePngBulk(){
+    var comboValue = $('#barcodeType').val();
+    var bar_type = "EAN-8";
+    switch(comboValue){
+        case "EAN8" : 
+            bar_type = "EAN-8"
+            break;
+        case "EAN13" : 
+            bar_type = "EAN-13";
+            break;
+    }
+
+    var pathList = [];
+    console.log(tempDir);
+    $('svg[id*=image-]').each(function() {
+        var index = $(this).attr('id');
+        var value = $(this).attr('value');
+        console.log(index,value);
+        var elem = document.getElementById(index);
+        var html = elem.outerHTML;
+        var path = tempDir+"/"+bar_type+"_"+value+".png";
+        pathList.push(path);
+        console.log(path);
+        svgToImg.from(html).toJpeg({
+            path: path
+        });
+    });
+    console.log(pathList);
+
+    setTimeout(() => {
+        dialog.showSaveDialog(
+            {
+                filters : [
+                    { name: 'achives', extensions: ['zip'] }
+                ],
+                defaultPath : bar_type+"_png_list.zip"
+            },
+            function(path){
+                //achive
+                var zip = new AdmZip();
+                for(var i in pathList)
+                    zip.addLocalFile(pathList[i]);
+                zip.writeZip(path);
+            }
+        );
+    }, pathList.length * 1500);
+}
+function saveJpgBulk(){
+    var comboValue = $('#barcodeType').val();
+    var bar_type = "EAN-8";
+    switch(comboValue){
+        case "EAN8" : 
+            bar_type = "EAN-8"
+            break;
+        case "EAN13" : 
+            bar_type = "EAN-13";
+            break;
+    }
+
+    var pathList = [];
+    console.log(tempDir);
+    $('svg[id*=image-]').each(function() {
+        var index = $(this).attr('id');
+        var value = $(this).attr('value');
+        console.log(index,value);
+        var elem = document.getElementById(index);
+        var html = elem.outerHTML;
+        var path = tempDir+"/"+bar_type+"_"+value+".jpg";
+        pathList.push(path);
+        console.log(path);
+        svgToImg.from(html).toJpeg({
+            path: path
+        });
+    });
+    console.log(pathList);
+
+    setTimeout(() => {
+        dialog.showSaveDialog(
+            {
+                filters : [
+                    { name: 'achives', extensions: ['zip'] }
+                ],
+                defaultPath : bar_type+"_jpg_list.zip"
+            },
+            function(path){
+                //achive
+                var zip = new AdmZip();
+                for(var i in pathList)
+                    zip.addLocalFile(pathList[i]);
+                zip.writeZip(path);
+            }
+        );
+    }, pathList.length * 1500);
+}
+
+function savePdfBulk(){
+    var comboValue = $('#barcodeType').val();
+    var bar_type = "EAN-8";
+    switch(comboValue){
+        case "EAN8" : 
+            bar_type = "EAN-8"
+            break;
+        case "EAN13" : 
+            bar_type = "EAN-13";
+            break;
+    }
+
+    var pathList = [];
+    var contentList = [];
+    console.log(tempDir);
+    $('svg[id*=image-]').each(function() {
+        var index = $(this).attr('id');
+        var value = $(this).attr('value');
+        console.log(index,value);
+        var elem = document.getElementById(index);
+        var html = elem.outerHTML;
+        var path = bar_type+"_"+value+".pdf";
+        pathList.push(path);
+        var opt = {
+            margin:       0,
+            filename:     bar_type+"_"+value+".pdf",
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 30 },
+            jsPDF:        { orientation : 'l', unit: 'px', format: [$('#'+index).width(), $('#'+index).height()+10]}
+          };
+          
+        // New Promise-based usage:
+        var worker = html2pdf().set(opt).from(html).outputPdf().then(function(e){
+            contentList.push(e);
+        });
+    });
+    console.log(pathList);
+    console.log(contentList);
+
+    setTimeout(() => {
+        dialog.showSaveDialog(
+            {
+                filters : [
+                    { name: 'achives', extensions: ['zip'] }
+                ],
+                defaultPath : bar_type+"_pdf_list.zip"
+            },
+            function(path){
+                //achive
+                var zip = new AdmZip();
+                // var content = "inner content of the file";
+                // zip.addFile("test.txt", Buffer.alloc(content.length, content), "entry comment goes here");
+                for(var i in pathList)
+                {
+                    var content = contentList[i];
+                    console.log('pdf content',content.length)
+                    var text = "Hello world";
+                    console.log(pathList[i])
+                    console.log(content);
+                    zip.addFile(pathList[i], Buffer.alloc(content.length, content,'binary'));
+                }
+                zip.writeZip(path);
+            }
+        );
+    }, pathList.length*2000);
+}
+///////////////////////////////////////////////////////////////////////
+//generate barcodes
+///////////////////////////////////////////////////////////////////////
 var barcodeResultContainer = function(id,value,option){
     this.id = id;
     this.value = value;
@@ -187,7 +360,7 @@ var barcodeResultContainer = function(id,value,option){
                                     '<span class="btn-download" id="btn-png" data-imageID="'+this.id+'" onclick="downloadPNG(\''+"image-"+this.id+'\')">PNG</span>'+
                                     '<span class="btn-download" id="btn-jpg" data-imageID="'+this.id+'" onclick="downloadJPG(\''+"image-"+this.id+'\')">JPG</span>'+
                                     '<span class="btn-download" id="btn-pdf" data-imageID="'+this.id+'" onclick="downloadPDF(\''+"image-"+this.id+'\')">PDF</span>'+
-                                    '<span class="btn-download" id="btn-ai"  data-imageID="'+this.id+'" onclick="downloadAI(\''+"image-"+this.id+'\')">AI</span>'+
+                                    '<a href="#" class="btn-download" id="btn-ai"  data-imageID="'+this.id+'" onclick="downloadAI(\''+"image-"+this.id+'\')">AI</a>'+
                                     '<span class="btn-download" id="btn-eps" data-imageID="'+this.id+'" onclick="downloadEPS(\''+"image-"+this.id+'\')">EPS</span>'+
                                     '<br><br><hr>'+
                                 '</div>');
@@ -218,8 +391,7 @@ $(document).ready(function(){
     $('#btn-generate').click(function(){
         var strCode = $('#code-list').val();
         var strCodeList = strCode.split(/\r?\n/);
-        console.log(strCodeList);
-
+        $('#bulk-save-container').show();
         //clear result panel
         $('#result-container').children().remove();
 
@@ -228,4 +400,18 @@ $(document).ready(function(){
             barcodeResultContainer(i, strCodeList[i]);
         }
     })
+
+    $("#btn-png-bulk").click(function(){
+        savePngBulk();
+    })
+
+    $("#btn-jpg-bulk").click(function(){
+        saveJpgBulk();
+    })
+
+    $("#btn-pdf-bulk").click(function(){
+        savePdfBulk();
+    })
+
+    $('#bulk-save-container').hide();
 })

@@ -20,6 +20,11 @@
         
         <script src="./assets/vendor/saveSvgAsPng.js"></script>
         <script src="./assets/barcode-generator.js"></script>
+
+        <!-- <script src="./assets/vendor/jspdf.min.js"></script>
+        <script src="./assets/vendor/svg2pdf.min.js"></script> -->
+        <script src="https://raw.githack.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.js"></script>
+
         
         <script>if (window.module) module = window.module;</script>
     </head>
@@ -29,22 +34,8 @@
                 <div>
                     <span class="input-group-btn">
                         <select class="btn barcode-select" id="barcodeType" title="CODE128">
-                            <option value="CODE128">CODE128 auto</option>
-                            <option value="CODE128A">CODE128 A</option>
-                            <option value="CODE128B">CODE128 B</option>
-                            <option value="CODE128C">CODE128 C</option>
-                            <option value="EAN13">EAN13</option>
                             <option value="EAN8" selected>EAN8</option>
-                            <option value="UPC">UPC</option>
-                            <option value="CODE39">CODE39</option>
-                            <option value="ITF14">ITF14</option>
-                            <option value="ITF">ITF</option>
-                            <option value="MSI">MSI</option>
-                            <option value="MSI10">MSI10</option>
-                            <option value="MSI11">MSI11</option>
-                            <option value="MSI1010">MSI1010</option>
-                            <option value="MSI1110">MSI1110</option>
-                            <option value="pharmacode">Pharmacode</option>
+                            <option value="EAN13">EAN13</option>
                         </select>
                     </span>
                 </div>

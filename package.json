@@ -21,6 +21,9 @@
   },
   "dependencies": {
     "adm-zip": "^0.4.13",
+    "html-pdf": "^2.2.0",
+    "remote": "^0.2.6",
+    "save-svg-as-png": "^1.4.6",
     "svg-to-img": "^2.0.8",
     "temp-dir": "^1.0.0"
   }

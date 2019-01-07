@@ -168,3 +168,40 @@ html{
   margin: 2rem;
   padding: 1rem;
 }
+
+.modal-container{
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: rgba(0,0,0,.7);
+  padding: 4rem;
+  padding-top: 9rem;
+}
+
+.custom-modal-title{
+  color: white;
+  font-size: 24px;
+  padding-bottom: 2rem;
+}
+
+.custom-modal-status{
+  color: white;
+  font-size: 18px;
+  padding-bottom: 2rem;
+}
+.custom-progress-container{
+  background: white;
+  width: 100%;
+  position: relative;
+  height: 10px;
+}
+
+.custom-progress-bar{
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 10px;
+  background: #1b8624;
+}

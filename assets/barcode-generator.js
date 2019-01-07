@@ -117,7 +117,7 @@ function downloadJPG(index){
 
 function downloadPDF(index){
     var elem = document.getElementById(index);
-    var html = elem.outerHTML;
+    var context = elem.outerHTML;
     var comboValue = $('#barcodeType').val();
     var bar_type = "EAN-8";
     switch(comboValue){
@@ -129,6 +129,10 @@ function downloadPDF(index){
             break;
     }
     var value = $('#'+index).attr('value');
+    var buffer = $('#result-container').html();
+    $('#result-container').children().remove();
+    $('#result-container').append(context);
+    console.log('start entry here');
     var opt = {
         margin:       0,
         filename:     bar_type+"_"+value+".pdf",
@@ -138,7 +142,12 @@ function downloadPDF(index){
       };
       
     // New Promise-based usage:
-    html2pdf().set(opt).from(html).save();
+    html2pdf().set(opt).from(context).save();
+    setTimeout(() => {
+        $('#result-container').children().remove();
+        $('#result-container').append(buffer);    
+    }, 800);
+    
 }
 
 function downloadAI(index){
@@ -188,8 +197,9 @@ function savePngBulk(){
         var html = svgelem.outerHTML;
         var path = dir+"/"+bar_type+"_"+value+".png";
         console.log(path);
-        await svgToImg.from(html).toJpeg({
-            path: path
+        await svgToImg.from(html).toPng({
+            path: path,
+            encoding: "base64"
         });
 
         modal.updateModal(elemindex);
@@ -241,7 +251,7 @@ function saveJpgBulk(){
         console.log(index,value);
         var svgelem = document.getElementById(index);
         var html = svgelem.outerHTML;
-        var path = dir+"/"+bar_type+"_"+value+".png";
+        var path = dir+"/"+bar_type+"_"+value+".jpg";
         console.log(path);
         modal.updateModal(elemindex);
         await svgToImg.from(html).toJpeg({
@@ -286,6 +296,7 @@ function savePdfBulk(){
     });
     console.log(elemlist);
     var modal = new StatusModal("Saving",elemlist.length);
+    var buffer = $('#result-container').html();
     async function timerCallback(){
         var elem = $('#'+elemlist[elemindex]);
         var index = elem.attr('id');
@@ -297,60 +308,46 @@ function savePdfBulk(){
         console.log(path);
 
         modal.updateModal(elemindex);
-        // var opt = {
-        //     margin:       0,
-        //     filename:     bar_type+"_"+value+".pdf",
-        //     image:        { type: 'jpeg', quality: 0.98 },
-        //     html2canvas:  { scale: 30 },
-        //     jsPDF:        { orientation : 'l', unit: 'px', format: [$('#'+index).width(), $('#'+index).height()+10]}
-        // };
+
+        
+        $('#result-container').children().remove();
+        $('#result-container').append(html);
+        //html - pdf
+        var opt = {
+            margin:       0,
+            filename:     bar_type+"_"+value+".pdf",
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 10 },
+            jsPDF:        { orientation : 'l', unit: 'px', format: [$('#'+index).width(), $('#'+index).height()+10]}
+        };
             
-        // // New Promise-based usage:
-        // var worker = new html2pdf();
-        // await worker.set(opt).from(html).outputPdf().then(async function(e){
-        //     var buf = new Buffer(e, 'binary');
-        //     await fs.writeFile(path, buf, function(err) {
-        //         if(err) {
-        //             return console.log(err);
-        //         }
+        // New Promise-based usage:
+        await html2pdf().set(opt).from(html).outputPdf().then(async function(e){
+            var buf = new Buffer(e, 'binary');
+            await fs.writeFile(path, buf, function(err) {
+                if(err) {
+                    return console.log(err);
+                }
 
-        //         console.log("The file was saved!");
-        //     }); 
-        // });
+                $('#result-container').children().remove();
+                $('#result-container').append(buffer);
+                console.log("The file was saved!");
 
-        var doc = new jsPDF('l','pt',[$('#'+index).width(), $('#'+index).height()+10]);
-        // console.log(html)
-        var svgAsText = new XMLSerializer().serializeToString(svgelem);
-        console.log(svgAsText);
-        doc.addSVG(svgAsText, 0,0,$('#'+index).width(), $('#'+index).height());
+                setTimeout(() => {
+                    console.log('timeout entry');
+                    if(elemindex<elemlist.length)
+                    {
+                        timerCallback();
+                        elemindex++;
+                    }
+                    else{
+                        modal.removeModal();
+                    }
+                }, 500);
+            });
+        });
 
-        // var canvas = document.createElement('canvas');
-        // canvg(canvas, html);
-        // var imgData = canvas.toDataURL('image/png');
-        // console.log(imgData);
-        // doc.addImage(imgData,'png',0,0,$('#'+index).width(), $('#'+index).height());
-        // console.log(doc);
-        var content = doc.output('arraybuffer');
-        var filecontent = doc.arrayBufferToBinaryString(content);
-        console.log(filecontent);
-        var buf = new Buffer(filecontent, 'binary');
-        await fs.writeFile(path, buf, function(err) {
-            if(err) {
-                return console.log(err);
-            }
-
-            console.log("The file was saved!");
-        }); 
-        setTimeout(() => {
-            if(elemindex<elemlist.length)
-            {
-                timerCallback();
-                elemindex++;
-            }
-            else{
-                modal.removeModal();
-            }
-        }, 600);
+        
     }
 
     timerCallback();
@@ -442,14 +439,17 @@ $(document).ready(function(){
         }
 
         console.log(tmp);
-        // $('#bulk-save-container').show();
-        // //clear result panel
-        // $('#result-container').children().remove();
+        $('#bulk-save-container').show();
+        //clear result panel
+        $('#result-container').children().remove();
 
-        // //add results
-        // for(var i in strCodeList){
-        //     barcodeResultContainer(i, strCodeList[i]);
-        // }
+        //show Status bar
+        $('#status-bar-container').show();
+        $('#status-bar-container').html("<strong>Total Entries</strong> : "+strCodeList.length+" / <strong>Duplicated Entries</strong> : "+(strCodeList.length - tmp.length)+"<br><strong>"+tmp.length+"</strong> Barcodes Created");
+        //add results
+        for(var i in tmp){
+            barcodeResultContainer(i, tmp[i]);
+        }
     })
 
     $("#btn-png-bulk").click(function(){
@@ -465,4 +465,5 @@ $(document).ready(function(){
     })
 
     $('#bulk-save-container').hide();
+    $('#status-bar-container').hide();
 })
